@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "room_type_images",
+  "info": {
+    "singularName": "room-type-image",
+    "pluralName": "room-type-images",
+    "displayName": "Room Type Images"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "room_type_image_id": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "room_type_id": {
+      "type": "integer",
+      "required": true
+    },
+    "image_id": {
+      "type": "integer",
+      "required": true
+    },
+    "image_url": {
+      "type": "string",
+      "required": true
+    },
+    "image_title": {
+      "type": "string"
+    }
+  }
+}

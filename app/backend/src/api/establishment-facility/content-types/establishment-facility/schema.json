@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "establishment_facilities",
+  "info": {
+    "singularName": "establishment-facility",
+    "pluralName": "establishment-facilities",
+    "displayName": "Establishment Facilities"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "establishment_facility_id": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "facility_id": {
+      "type": "integer",
+      "required": true
+    },
+    "description": {
+      "type": "richtext"
+    }
+  }
+}

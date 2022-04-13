@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "rating_types",
+  "info": {
+    "singularName": "rating-type",
+    "pluralName": "rating-types",
+    "displayName": "Rating Types"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "rating_type_id": {
+      "type": "integer",
+      "required": true
+    },
+    "rating_type": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "locations",
+  "info": {
+    "singularName": "location",
+    "pluralName": "locations",
+    "displayName": "Locations",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "location_id": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "title": {
+      "type": "string"
+    },
+    "province_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::province.province",
+      "inversedBy": "locations"
+    }
+  }
+}

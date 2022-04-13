@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "establishments",
+  "info": {
+    "singularName": "establishment",
+    "pluralName": "establishments",
+    "displayName": "Establishments"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "establishment_id": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "location_id": {
+      "type": "integer",
+      "required": true
+    },
+    "address": {
+      "type": "text"
+    },
+    "postal_code": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "string"
+    },
+    "longitude": {
+      "type": "string"
+    },
+    "geocode_accuracy": {
+      "type": "string"
+    },
+    "accommodation_type_id": {
+      "type": "integer",
+      "required": true
+    },
+    "rating_type_id": {
+      "type": "integer",
+      "required": true,
+      "default": 0
+    },
+    "rating": {
+      "type": "integer",
+      "default": 0,
+      "max": 5,
+      "min": 1
+    },
+    "fax_number": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    }
+  }
+}

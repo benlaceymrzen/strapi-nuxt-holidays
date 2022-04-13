@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "countries",
+  "info": {
+    "singularName": "country",
+    "pluralName": "countries",
+    "displayName": "Countries",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "country_code": {
+      "type": "string"
+    },
+    "country_id": {
+      "type": "integer"
+    },
+    "provinces": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::province.province",
+      "mappedBy": "country_id"
+    }
+  }
+}
