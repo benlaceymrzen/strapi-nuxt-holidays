@@ -112,7 +112,7 @@ cypress/videos
 ############################
 # Documentation
 ############################
-
+documents
 dist
 
 ############################
@@ -127,7 +127,7 @@ schema.graphql
 ############################
 
 .dev
-# *.cache
+*.cache
 
 ############################
 # Visual Studio Code
