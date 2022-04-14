@@ -4,24 +4,32 @@
   "info": {
     "singularName": "establishment-facility",
     "pluralName": "establishment-facilities",
-    "displayName": "Establishment Facilities"
+    "displayName": "Establishment Facilities",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
-    "establishment_facility_id": {
-      "type": "integer",
-      "required": true,
-      "unique": true
-    },
-    "facility_id": {
-      "type": "integer",
-      "required": true
-    },
     "description": {
       "type": "richtext"
+    },
+    "establishment_facility_id": {
+      "type": "uid",
+      "required": true
+    },
+    "establishment_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::establishment.establishment",
+      "inversedBy": "establishment_facility_id"
+    },
+    "facility_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::facility.facility",
+      "inversedBy": "establishment_facility_id"
     }
   }
 }

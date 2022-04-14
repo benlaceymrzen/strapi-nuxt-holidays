@@ -4,18 +4,14 @@
   "info": {
     "singularName": "option",
     "pluralName": "options",
-    "displayName": "Options"
+    "displayName": "Options",
+    "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "option_id": {
-      "type": "integer",
-      "unique": true,
-      "required": true
-    },
     "title": {
       "type": "string",
       "required": true
@@ -25,6 +21,11 @@
       "required": true,
       "unique": true,
       "default": 1
+    },
+    "option_id": {
+      "type": "uid",
+      "default": "0",
+      "required": true
     }
   }
 }

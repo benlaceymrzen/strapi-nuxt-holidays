@@ -4,10 +4,11 @@
   "info": {
     "singularName": "rating-type",
     "pluralName": "rating-types",
-    "displayName": "Rating Types"
+    "displayName": "Rating Types",
+    "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -18,6 +19,12 @@
     "rating_type": {
       "type": "string",
       "required": true
+    },
+    "establishments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::establishment.establishment",
+      "mappedBy": "rating_type_id"
     }
   }
 }

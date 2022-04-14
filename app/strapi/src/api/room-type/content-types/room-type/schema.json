@@ -4,22 +4,14 @@
   "info": {
     "singularName": "room-type",
     "pluralName": "room-types",
-    "displayName": "Room Types"
+    "displayName": "Room Types",
+    "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "room_type_id": {
-      "type": "integer",
-      "required": true,
-      "unique": true
-    },
-    "establishment_id": {
-      "type": "integer",
-      "required": true
-    },
     "room_code": {
       "type": "string",
       "required": true,
@@ -31,6 +23,25 @@
     },
     "description": {
       "type": "richtext"
+    },
+    "establishments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::establishment.establishment",
+      "mappedBy": "room_type_id"
+    },
+    "image": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "image_id": {
+      "type": "string",
+      "required": true,
+      "unique": false
     }
   }
 }

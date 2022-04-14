@@ -8,23 +8,28 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "location_id": {
-      "type": "integer",
-      "required": true,
-      "unique": true
-    },
     "title": {
       "type": "string"
     },
-    "province_id": {
+    "province_ids": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::province.province",
-      "inversedBy": "locations"
+      "mappedBy": "location_ids"
+    },
+    "establishment_ids": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::establishment.establishment",
+      "mappedBy": "location_id"
+    },
+    "location_id": {
+      "type": "uid",
+      "required": true
     }
   }
 }

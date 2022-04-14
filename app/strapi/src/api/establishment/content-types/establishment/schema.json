@@ -4,24 +4,16 @@
   "info": {
     "singularName": "establishment",
     "pluralName": "establishments",
-    "displayName": "Establishments"
+    "displayName": "Establishments",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "establishment_id": {
-      "type": "integer",
-      "required": true,
-      "unique": true
-    },
     "title": {
       "type": "string",
-      "required": true
-    },
-    "location_id": {
-      "type": "integer",
       "required": true
     },
     "address": {
@@ -42,15 +34,6 @@
     "geocode_accuracy": {
       "type": "string"
     },
-    "accommodation_type_id": {
-      "type": "integer",
-      "required": true
-    },
-    "rating_type_id": {
-      "type": "integer",
-      "required": true,
-      "default": 0
-    },
     "rating": {
       "type": "integer",
       "default": 0,
@@ -62,6 +45,46 @@
     },
     "email": {
       "type": "email"
+    },
+    "location_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::location.location",
+      "inversedBy": "establishment_ids"
+    },
+    "accommodation_type_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::accommodation-type.accommodation-type",
+      "inversedBy": "establishments"
+    },
+    "rating_type_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::rating-type.rating-type",
+      "inversedBy": "establishments"
+    },
+    "room_type_id": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::room-type.room-type",
+      "inversedBy": "establishments"
+    },
+    "establishment_facility_id": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::establishment-facility.establishment-facility",
+      "mappedBy": "establishment_id"
+    },
+    "accommodation_types": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::accommodation-type.accommodation-type"
+    },
+    "establishment_id": {
+      "type": "uid",
+      "default": "0",
+      "required": true
     }
   }
 }

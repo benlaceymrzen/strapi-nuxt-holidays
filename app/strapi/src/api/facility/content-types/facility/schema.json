@@ -4,10 +4,11 @@
   "info": {
     "singularName": "facility",
     "pluralName": "facilities",
-    "displayName": "Facilities"
+    "displayName": "Facilities",
+    "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -25,6 +26,12 @@
     "title": {
       "type": "string",
       "required": true
+    },
+    "establishment_facility_id": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::establishment-facility.establishment-facility",
+      "mappedBy": "facility_id"
     }
   }
 }
