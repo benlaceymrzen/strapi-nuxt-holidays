@@ -16,3 +16,8 @@
 - Static Data Specifications v1.5 - documents/Client Docs/
 - Booking API JSON Interface Specifications - documents/Client Docs/
 - Entity Relationship Diagrams - documents/Database/
+
+## JSON Content Importer
+- Where possible we should be cleaning up the data, removing html where possible
+- Images will most likely be imported and served through AssetZen where quality and size can be controlled
+- 
