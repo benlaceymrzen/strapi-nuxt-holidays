@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "board_type_inclusions",
+  "info": {
+    "singularName": "board-type-inclusion",
+    "pluralName": "board-type-inclusions",
+    "displayName": "Board Type Inclusions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "board_type_inclusion_id": {
+      "type": "uid",
+      "default": "0",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    }
+  }
+}
