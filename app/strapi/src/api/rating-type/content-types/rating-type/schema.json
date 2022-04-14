@@ -12,19 +12,13 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "rating_type_id": {
-      "type": "integer",
-      "required": true
-    },
     "rating_type": {
       "type": "string",
       "required": true
     },
-    "establishments": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment.establishment",
-      "mappedBy": "rating_type_id"
+    "rating_type_id2": {
+      "type": "uid",
+      "required": true
     }
   }
 }

@@ -24,12 +24,6 @@
     "description": {
       "type": "richtext"
     },
-    "establishments": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment.establishment",
-      "mappedBy": "room_type_id"
-    },
     "image": {
       "type": "media",
       "multiple": true,

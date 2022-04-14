@@ -46,40 +46,27 @@
     "email": {
       "type": "email"
     },
-    "location_id": {
+    "location": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::location.location",
-      "inversedBy": "establishment_ids"
-    },
-    "accommodation_type_id": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::accommodation-type.accommodation-type",
       "inversedBy": "establishments"
     },
-    "rating_type_id": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::rating-type.rating-type",
-      "inversedBy": "establishments"
-    },
-    "room_type_id": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::room-type.room-type",
-      "inversedBy": "establishments"
-    },
-    "establishment_facility_id": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment-facility.establishment-facility",
-      "mappedBy": "establishment_id"
-    },
-    "accommodation_types": {
+    "accommodation_type": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::accommodation-type.accommodation-type"
+    },
+    "rating_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::rating-type.rating-type"
+    },
+    "facilities": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::facility.facility",
+      "inversedBy": "establishments"
     },
     "establishment_id": {
       "type": "uid",

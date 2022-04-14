@@ -19,12 +19,6 @@
       "type": "uid",
       "required": true
     },
-    "establishment_id": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::establishment.establishment",
-      "inversedBy": "establishment_facility_id"
-    },
     "facility_id": {
       "type": "relation",
       "relation": "manyToOne",

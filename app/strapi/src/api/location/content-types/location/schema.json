@@ -21,15 +21,15 @@
       "target": "api::province.province",
       "mappedBy": "location_ids"
     },
-    "establishment_ids": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment.establishment",
-      "mappedBy": "location_id"
-    },
     "location_id": {
       "type": "uid",
       "required": true
+    },
+    "establishments": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::establishment.establishment",
+      "inversedBy": "location"
     }
   }
 }

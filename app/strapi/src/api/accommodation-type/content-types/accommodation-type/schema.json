@@ -19,12 +19,6 @@
     "accommodation_type": {
       "type": "string",
       "required": true
-    },
-    "establishments": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment.establishment",
-      "mappedBy": "accommodation_type_id"
     }
   }
 }
