@@ -62,16 +62,16 @@
       "relation": "oneToOne",
       "target": "api::rating-type.rating-type"
     },
+    "establishment_id": {
+      "type": "uid",
+      "default": "0",
+      "required": true
+    },
     "facilities": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::facility.facility",
       "inversedBy": "establishments"
-    },
-    "establishment_id": {
-      "type": "uid",
-      "default": "0",
-      "required": true
     }
   }
 }
