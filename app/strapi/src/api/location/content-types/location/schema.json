@@ -29,7 +29,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::establishment.establishment",
-      "inversedBy": "location"
+      "mappedBy": "location"
     }
   }
 }

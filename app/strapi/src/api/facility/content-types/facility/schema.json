@@ -27,17 +27,11 @@
       "type": "string",
       "required": true
     },
-    "establishment_facility_id": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::establishment-facility.establishment-facility",
-      "mappedBy": "facility_id"
-    },
     "establishments": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::establishment.establishment",
-      "mappedBy": "facilities"
+      "inversedBy": "facilities"
     }
   }
 }

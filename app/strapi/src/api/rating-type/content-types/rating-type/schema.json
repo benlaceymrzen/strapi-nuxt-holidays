@@ -16,7 +16,7 @@
       "type": "string",
       "required": true
     },
-    "rating_type_id2": {
+    "rating_type_id": {
       "type": "uid",
       "required": true
     }
