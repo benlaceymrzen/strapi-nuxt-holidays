@@ -70,8 +70,7 @@
       "component": "geographic.geo-point"
     },
     "description": {
-      "type": "text",
-      "required": false
+      "type": "richtext"
     }
   }
 }
