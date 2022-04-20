@@ -23,8 +23,7 @@
     "provinces": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::province.province",
-      "mappedBy": "country_id"
+      "target": "api::province.province"
     },
     "country_id": {
       "type": "uid",

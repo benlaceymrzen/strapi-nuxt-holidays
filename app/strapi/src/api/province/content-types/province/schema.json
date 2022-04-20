@@ -18,17 +18,11 @@
     "title": {
       "type": "string"
     },
-    "country_id": {
+    "locations": {
       "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::country.country",
-      "inversedBy": "provinces"
-    },
-    "location_ids": {
-      "type": "relation",
-      "relation": "manyToMany",
+      "relation": "oneToMany",
       "target": "api::location.location",
-      "inversedBy": "province_ids"
+      "mappedBy": "province_id"
     }
   }
 }

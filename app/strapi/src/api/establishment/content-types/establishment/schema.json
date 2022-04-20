@@ -25,15 +25,6 @@
     "phone_number": {
       "type": "string"
     },
-    "latitude": {
-      "type": "string"
-    },
-    "longitude": {
-      "type": "string"
-    },
-    "geocode_accuracy": {
-      "type": "string"
-    },
     "rating": {
       "type": "integer",
       "default": 0,
@@ -72,6 +63,15 @@
       "relation": "manyToMany",
       "target": "api::facility.facility",
       "inversedBy": "establishments"
+    },
+    "geographic_location": {
+      "type": "component",
+      "repeatable": false,
+      "component": "geographic.geo-point"
+    },
+    "description": {
+      "type": "text",
+      "required": false
     }
   }
 }

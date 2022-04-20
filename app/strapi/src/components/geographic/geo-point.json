@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_geographic_geo_points",
+  "info": {
+    "displayName": "Geo-Point",
+    "icon": "globe-americas"
+  },
+  "options": {},
+  "attributes": {
+    "latitude": {
+      "type": "float"
+    },
+    "longitude": {
+      "type": "float"
+    },
+    "accuracy": {
+      "type": "integer"
+    }
+  }
+}

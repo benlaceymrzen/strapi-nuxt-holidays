@@ -15,11 +15,11 @@
     "title": {
       "type": "string"
     },
-    "province_ids": {
+    "province_id": {
       "type": "relation",
-      "relation": "manyToMany",
+      "relation": "manyToOne",
       "target": "api::province.province",
-      "mappedBy": "location_ids"
+      "inversedBy": "locations"
     },
     "location_id": {
       "type": "uid",
