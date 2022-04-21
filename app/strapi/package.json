@@ -9,15 +9,20 @@
     "build": "strapi build",
     "strapi": "strapi"
   },
-  "devDependencies": {},
   "dependencies": {
-    "@strapi/strapi": "4.1.8",
-    "@strapi/plugin-users-permissions": "4.1.8",
     "@strapi/plugin-i18n": "4.1.8",
-    "better-sqlite3": "7.4.6"
+    "@strapi/plugin-users-permissions": "4.1.8",
+    "@strapi/strapi": "4.1.8",
+    "@webbio/strapi-plugin-scheduler": "^0.1.0",
+    "better-sqlite3": "7.4.6",
+    "global": "^4.4.0",
+    "nvm": "^0.0.4",
+    "strapi-plugin-migrations": "^1.0.3",
+    "strapi-plugin-rest-cache": "^4.2.4",
+    "strapi-provider-rest-cache-memory": "^4.2.4"
   },
   "author": {
-    "name": "A Strapi developer"
+    "name": "Mr Zen"
   },
   "strapi": {
     "uuid": "036b13a9-c682-4b35-adf5-fc6a088187fd"
