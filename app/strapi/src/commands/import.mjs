@@ -6,7 +6,7 @@ import { hideBin } from 'yargs/helpers'
 import strapi from '@strapi/strapi'
 
 /**
- * 
+ *
  * @param {string[]} args Arguments to use
  */
 async function run(args, strapi) {
@@ -29,13 +29,13 @@ async function run(args, strapi) {
 }
 
 /**
- * 
- * @param {string} path 
- * @param {StrpaiInstance} strapi 
- * @returns 
+ *
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
  */
 async function importCountries(path, strapi, dryRun) {
-    console.info(`Importing countries from ${path}`) 
+    console.info(`Importing countries from ${path}`)
     let file
 
     try {
@@ -50,7 +50,7 @@ async function importCountries(path, strapi, dryRun) {
 
     await Promise.all(countries.map(async c => {
         console.info(`Importing ${c.Title}`)
-        
+
         let entity = (await strapi.entityService.findMany('api::country.country', { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
 
         if (entity === null || entity === undefined) {
@@ -70,7 +70,7 @@ async function importCountries(path, strapi, dryRun) {
 
         await Promise.all(c.Provinces.map(async p => {
                let province = null
-               
+
                try {
                    province = (await strapi.entityService.findMany('api::province.province', {
                        filters: {
@@ -135,4 +135,5 @@ async function importCountries(path, strapi, dryRun) {
     } catch(error) {
         console.error(`Run Failed: ${error.message}`)
     }
+    instance.stop()
 })()
