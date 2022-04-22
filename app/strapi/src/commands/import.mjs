@@ -10,22 +10,22 @@ import strapi from '@strapi/strapi'
  * @param {string[]} args Arguments to use
  */
 async function run(args, strapi) {
-    await yargs(args)
-        .command('countries <path>', 'Import countries from JSON file', (yargs) => {
-            return yargs.positional('path', { describe: 'Path to countries JSON' })
-        }, async (argv) => {
-            await importCountries( resolve(argv.path), strapi, argv.dryRun)
-        })
-        .option('verbose', {
-            alias: 'v',
-            type: 'boolean',
-            description: 'Enable verbose logging'
-        })
-        .option('dry-run', {
-            type: 'boolean',
-            description: 'Don\'t actually modify data. Just pretend.',
-        })
-        .parseAsync()
+  await yargs(args)
+    .command('countries <path>', 'Import countries from JSON file', (yargs) => {
+      return yargs.positional('path', { describe: 'Path to countries JSON' })
+    }, async (argv) => {
+      await importCountries( resolve(argv.path), strapi, argv.dryRun)
+    })
+    .option('verbose', {
+      alias: 'v',
+      type: 'boolean',
+      description: 'Enable verbose logging'
+    })
+    .option('dry-run', {
+      type: 'boolean',
+      description: 'Don\'t actually modify data. Just pretend.',
+    })
+    .parseAsync()
 }
 
 /**
@@ -35,105 +35,122 @@ async function run(args, strapi) {
  * @returns
  */
 async function importCountries(path, strapi, dryRun) {
-    console.info(`Importing countries from ${path}`)
-    let file
+  console.info(`Importing countries from ${path}`)
+  let file
 
-    try {
-        file = await readFile(path)
-    } catch(error) {
-        console.error(`Unable to open file: ${error.message}`)
-        return
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const countries = JSON.parse(file)
+  console.info(`Importing ${countries.length} countries`)
+
+  await Promise.all(countries.map(async c => {
+    console.info(`Importing ${c.Title}`)
+
+    let entity = (await strapi.entityService.findMany('api::country.country', { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new country: ${c.Title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create('api::country.country', {
+          data: {
+            country_id: c.CountryId.toString(),
+            title: c.Title,
+            code: c.CountryCode,
+          },
+        })
+        console.info(`Imported Country ${c.Title} (${entity.country_id})`)
+      }
     }
 
-    const countries = JSON.parse(file)
-    console.info(`Importing ${countries.length} countries`)
+    const provinces = await Promise.all(
+      c.Provinces.map(async p => {
+        let province = null
 
-    await Promise.all(countries.map(async c => {
-        console.info(`Importing ${c.Title}`)
-
-        let entity = (await strapi.entityService.findMany('api::country.country', { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
-
-        if (entity === null || entity === undefined) {
-            console.info(`Creating new country: ${c.Title}`)
-
-            if (!dryRun) {
-                entity = await strapi.entityService.create('api::country.country', {
-                    data: {
-                        country_id: c.CountryId.toString(),
-                        title: c.Title,
-                        code: c.CountryCode,
-                    },
-                })
-                console.info(`Imported Country ${c.Title} (${entity.country_id})`)
-            }
+        try {
+          province = (await strapi.entityService.findMany('api::province.province', {
+            filters: {
+              province_id: { $eq: p.ProvinceId }
+            },
+            limit: 1
+          }))[0]
+        } catch(error) {
+          console.error(error.message)
         }
 
-        await Promise.all(c.Provinces.map(async p => {
-               let province = null
+        if (province === null || province === undefined) {
+          console.info(`Creating new province ${c.Title} -> ${p.Title}`)
 
-               try {
-                   province = (await strapi.entityService.findMany('api::province.province', {
-                       filters: {
-                           province_id: { $eq: p.ProvinceId }
-                       },
-                       limit: 1
-                   }))[0]
-               } catch(error) {
-                    console.error(error.message)
-               }
+          if (!dryRun) {
+            try {
+              province = await strapi.entityService.create('api::province.province', {
+                data: {
+                  province_id: p.ProvinceId.toString(),
+                  title: p.Title,
+                }
+              })
+            } catch (error) {
+              console.error(`Unable to create province ${p.Title}: ${error.message}`)
+            }
+          }
+        }
 
-               if (province === null || province === undefined) {
-                   console.info(`Creating new province ${c.Title} -> ${p.Title}`)
+        const locations = await Promise.all(p.Locations.map(async l => {
+          console.log(`Importing location ${l.Title}`)
+          let location = null
 
-                   if (!dryRun) {
-                       try {
-                           province = await strapi.entityService.create('api::province.province', {
-                               data: {
-                                   province_id: p.ProvinceId.toString(),
-                                   title: p.Title,
-                               }
-                           })
-                       } catch(error) {
-                           console.error(`Unable to create province ${p.Title}: ${error.message}`)
-                       }
-                   }
-               }
+          location = (await strapi.entityService.findMany('api::location.location', {
+            filters: {
+              location_id: {$eq: l.LocationId}
+            },
+            limit: 1,
+          }))[0]
 
-               await Promise.all(p.Locations.map(async l => {
-                   console.log(`Importing location ${l.Title}`)
-                   let location = null
+          if (location === null || location === undefined) {
+            console.log(`Creating new location ${c.Title} -> ${p.Title} -> ${l.Title}`)
 
-                   location = (await strapi.entityService.findMany('api::location.location', {
-                       filters: {
-                           location_id: { $eq: l.LocationId }
-                       },
-                       limit: 1,
-                   }))[0]
+            if (!dryRun) location = await strapi.entityService.create('api::location.location', {
+              data: {
+                location_id: l.LocationId.toString(),
+                title: l.Title,
+              }
+            })
+          }
 
-                   if (location === null || location === undefined) {
-                       console.log(`Creating new location ${c.Title} -> ${p.Title} -> ${l.Title}`)
-
-                       if (!dryRun) location = await strapi.entityService.create('api::location.location', {
-                           data: {
-                               location_id: l.LocationId.toString(),
-                               title: l.Title,
-                           }
-                       })
-                   }
-               }))
+          return location
         }))
-    }))
+
+        console.log(`Assigning ${locations.length} locations to ${p.Title}`)
+        if (!dryRun) await strapi.entityService.update('api::province.province', province.id, {
+          data: {
+            locations: locations.map(l => l.id),
+          },
+        })
+        return province
+      })
+    )
+
+    console.log(`Assigning ${provinces.length} provinces to ${entity.title}`)
+    if (!dryRun) await strapi.entityService.update('api::country.country', entity.id, {
+      data: { provinces: provinces.map(p => p.id) }
+    })
+  }))
 }
 
 (async () => {
-    // Override the PORT param to a random port above 32768
-    process.env.PORT = randomInt(32767) + 32768
+  // Override the PORT param to a random port above 32768
+  process.env.PORT = randomInt(32767) + 32768
 
-    const instance = await (strapi().start())
-    try {
-        await run(hideBin(process.argv), instance)
-    } catch(error) {
-        console.error(`Run Failed: ${error.message}`)
-    }
-    instance.stop()
+  const instance = await (strapi().start())
+  try {
+    await run(hideBin(process.argv), instance)
+  } catch(error) {
+    console.error(`Run Failed: ${error.message}`)
+  }
+  instance.stop()
 })()
