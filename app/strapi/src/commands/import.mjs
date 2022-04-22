@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { randomInt } from 'node:crypto'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import strapi from '@strapi/strapi'
@@ -47,30 +48,91 @@ async function importCountries(path, strapi, dryRun) {
     const countries = JSON.parse(file)
     console.info(`Importing ${countries.length} countries`)
 
-    countries.forEach(async c => {
-        console.debug(`Importing ${c.Title}`)
-        let entity = await strapi.entityService.findOne('api::country.country', c.CountryId );
+    await Promise.all(countries.map(async c => {
+        console.info(`Importing ${c.Title}`)
+        
+        let entity = (await strapi.entityService.findMany('api::country.country', { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
 
-        if (entity === null) {
-            console.debug(`Creating new country: ${c.Title}`)
+        if (entity === null || entity === undefined) {
+            console.info(`Creating new country: ${c.Title}`)
 
             if (!dryRun) {
                 entity = await strapi.entityService.create('api::country.country', {
                     data: {
                         country_id: c.CountryId.toString(),
                         title: c.Title,
-                        code: c.CountryCode
-                    }
+                        code: c.CountryCode,
+                    },
                 })
                 console.info(`Imported Country ${c.Title} (${entity.country_id})`)
             }
         }
 
-        return
-    })
+        await Promise.all(c.Provinces.map(async p => {
+               let province = null
+               
+               try {
+                   province = (await strapi.entityService.findMany('api::province.province', {
+                       filters: {
+                           province_id: { $eq: p.ProvinceId }
+                       },
+                       limit: 1
+                   }))[0]
+               } catch(error) {
+                    console.error(error.message)
+               }
+
+               if (province === null || province === undefined) {
+                   console.info(`Creating new province ${c.Title} -> ${p.Title}`)
+
+                   if (!dryRun) {
+                       try {
+                           province = await strapi.entityService.create('api::province.province', {
+                               data: {
+                                   province_id: p.ProvinceId.toString(),
+                                   title: p.Title,
+                               }
+                           })
+                       } catch(error) {
+                           console.error(`Unable to create province ${p.Title}: ${error.message}`)
+                       }
+                   }
+               }
+
+               await Promise.all(p.Locations.map(async l => {
+                   console.log(`Importing location ${l.Title}`)
+                   let location = null
+
+                   location = (await strapi.entityService.findMany('api::location.location', {
+                       filters: {
+                           location_id: { $eq: l.LocationId }
+                       },
+                       limit: 1,
+                   }))[0]
+
+                   if (location === null || location === undefined) {
+                       console.log(`Creating new location ${c.Title} -> ${p.Title} -> ${l.Title}`)
+
+                       if (!dryRun) location = await strapi.entityService.create('api::location.location', {
+                           data: {
+                               location_id: l.LocationId.toString(),
+                               title: l.Title,
+                           }
+                       })
+                   }
+               }))
+        }))
+    }))
 }
 
 (async () => {
-    const instance = await (strapi({ port: 32768 }).start())
-   await run(hideBin(process.argv), instance)
+    // Override the PORT param to a random port above 32768
+    process.env.PORT = randomInt(32767) + 32768
+
+    const instance = await (strapi().start())
+    try {
+        await run(hideBin(process.argv), instance)
+    } catch(error) {
+        console.error(`Run Failed: ${error.message}`)
+    }
 })()
