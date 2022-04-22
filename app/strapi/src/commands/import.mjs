@@ -10,26 +10,38 @@ import strapi from '@strapi/strapi'
  * @param {string[]} args Arguments to use
  */
 async function run(args, strapi) {
-  await yargs(args)
-    .command('countries <path>', 'Import countries from JSON file', (yargs) => {
-      return yargs.positional('path', { describe: 'Path to countries JSON' })
-    }, async (argv) => {
-      await importCountries( resolve(argv.path), strapi, argv.dryRun)
-    })
-    .option('verbose', {
-      alias: 'v',
-      type: 'boolean',
-      description: 'Enable verbose logging'
-    })
-    .option('dry-run', {
-      type: 'boolean',
-      description: 'Don\'t actually modify data. Just pretend.',
-    })
-    .parseAsync()
+    await yargs(args)
+        .command('countries <path>', 'Import countries from JSON file', (yargs) => {
+          return yargs.positional('path', { describe: 'Path to countries JSON' })
+        }, async (argv) => {
+          await importCountries( resolve(argv.path), strapi, argv.dryRun)
+        })
+        .command('roomTypes <path>', 'Import room types from JSON file', (yargs) => {
+          return yargs.positional('path', { describe: 'Path to room types JSON' })
+        }, async (argv) => {
+          await importRoomTypes(resolve(argv.path), strapi, argv.dryRun)
+        })
+        .command('supplierBoardTypes <path>', 'Import supplier board types from JSON file', (yargs) => {
+          return yargs.positional('path', { describe: 'Path to supplier board types JSON' })
+        }, async (argv) => {
+          await importSupplierBoardTypes(resolve(argv.path), strapi, argv.dryRun)
+        })
+        .option('verbose', {
+            alias: 'verbose',
+            type: 'boolean',
+            description: 'Enable verbose logging'
+        })
+        .option('dry-run', {
+            type: 'boolean',
+            description: 'Don\'t actually modify data. Just pretend.',
+        })
+        .parseAsync()
 }
+
 
 /**
  *
+ * @author Leo Adamak
  * @param {string} path
  * @param {StrpaiInstance} strapi
  * @returns
@@ -141,6 +153,99 @@ async function importCountries(path, strapi, dryRun) {
     })
   }))
 }
+
+
+/**
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importRoomTypes(path, strapi, dryRun) {
+  console.info(`Importing room types from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const room_types = JSON.parse(file)
+  console.info(`Importing ${room_types.length} room types`)
+
+  await Promise.all(room_types.map(async rt => {
+    console.info(`Importing ${rt.Title}`)
+
+    let entity = (await strapi.entityService.findMany('api::room-type.room-type', { filters: { standard_room_type_id: { $eq: rt.StandardRoomTypeId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new room type: ${rt.Title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create('api::room-type.room-type', {
+          data: {
+            standard_room_type_id: rt.StandardRoomTypeId.toString(),
+            title: rt.Title,
+            //room_code: rt.RoomCode,
+            // image: rt.ImageUrl,
+            // image_id: rt.ImageId
+          },
+        })
+        console.info(`Imported room type ${rt.Title} (${entity.room_type_id})`)
+      }
+    }
+
+  }))
+}
+
+
+/**
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importSupplierBoardTypes(path, strapi, dryRun) {
+  console.info(`Importing supplier board types from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const board_types = JSON.parse(file)
+  console.info(`Importing ${board_types.length} board types`)
+
+  await Promise.all(board_types.map(async bt => {
+    console.info(`Importing ${bt.Title}`)
+
+    let entity = (await strapi.entityService.findMany('api::supplier-board-type.supplier-board-type', { filters: { supplier_board_type_id: { $eq: bt.SupplierBoardTypeId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new supplier board type: ${bt.Title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create('api::supplier-board-type.supplier-board-type', {
+          data: {
+            supplier_board_type_id: bt.SupplierBoardTypeId.toString(),
+            title: bt.Title,
+          },
+        })
+        console.info(`Imported supplier board type ${bt.Title} (${entity.supplier_board_type_id})`)
+      }
+    }
+
+  }))
+}
+
+
 
 (async () => {
   // Override the PORT param to a random port above 32768

@@ -12,7 +12,7 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "room_code": {
+    "standard_room_type_id": {
       "type": "string",
       "required": true,
       "unique": true
@@ -20,22 +20,6 @@
     "title": {
       "type": "string",
       "required": true
-    },
-    "description": {
-      "type": "richtext"
-    },
-    "image": {
-      "type": "media",
-      "multiple": true,
-      "required": false,
-      "allowedTypes": [
-        "images"
-      ]
-    },
-    "image_id": {
-      "type": "string",
-      "required": true,
-      "unique": false
     }
   }
 }
