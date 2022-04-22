@@ -18,6 +18,7 @@
     "@webbio/strapi-plugin-scheduler": "^0.1.0",
     "better-sqlite3": "7.4.6",
     "nvm": "^0.0.4",
+    "pg": "^8.7.3",
     "strapi-plugin-migrations": "^1.0.3",
     "strapi-plugin-rest-cache": "^4.2.4",
     "strapi-provider-rest-cache-memory": "^4.2.4",
