@@ -13,7 +13,7 @@ async function run(args, strapi) {
         .command('countries <path>', 'Import countries from JSON file', (yargs) => {
             return yargs.positional('path', { describe: 'Path to countries JSON' })
         }, async (argv) => {
-            await importCountries( resolve(argv.path), strapi )
+            await importCountries( resolve(argv.path), strapi, argv.dryRun)
         })
         .option('verbose', {
             alias: 'v',
@@ -33,7 +33,7 @@ async function run(args, strapi) {
  * @param {StrpaiInstance} strapi 
  * @returns 
  */
-async function importCountries(path, strapi) {
+async function importCountries(path, strapi, dryRun) {
     console.info(`Importing countries from ${path}`) 
     let file
 
@@ -54,14 +54,16 @@ async function importCountries(path, strapi) {
         if (entity === null) {
             console.debug(`Creating new country: ${c.Title}`)
 
-            entity = await strapi.entityService.create('api::country.country', {
-                data: {
-                    country_id: c.CountryId.toString(),
-                    title: c.Title,
-                    code: c.CountryCode
-                }
-            })
-            console.info(`Imported Country ${c.Title} (${entity.country_id})`)
+            if (!dryRun) {
+                entity = await strapi.entityService.create('api::country.country', {
+                    data: {
+                        country_id: c.CountryId.toString(),
+                        title: c.Title,
+                        code: c.CountryCode
+                    }
+                })
+                console.info(`Imported Country ${c.Title} (${entity.country_id})`)
+            }
         }
 
         return
