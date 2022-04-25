@@ -36,6 +36,21 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importErrataCategories(resolve(argv.path), strapi, argv.dryRun)
       })
+      .command('establishmentExtras <path>', 'Import establishment extras from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentExtras(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('establishmentImages <path>', 'Import establishment images from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentImages(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('establishmentRoomTypes <path>', 'Import establishment room types from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentRoomTypes(resolve(argv.path), strapi, argv.dryRun)
+      })
         .option('verbose', {
             alias: 'verbose',
             type: 'boolean',
@@ -96,8 +111,7 @@ async function importCountries(path, strapi, dryRun) {
         let province = null
 
         try {
-          let endpoint = 'api::province.province'
-          province = (await strapi.entityService.findMany(endpoint, {
+          province = (await strapi.entityService.findMany('api::province.province', {
             filters: {
               province_id: { $eq: p.ProvinceId }
             },
@@ -112,7 +126,7 @@ async function importCountries(path, strapi, dryRun) {
 
           if (!dryRun) {
             try {
-              province = await strapi.entityService.create(endpoint, {
+              province = await strapi.entityService.create('api::province.province', {
                 data: {
                   province_id: p.ProvinceId.toString(),
                   title: p.Title,
@@ -126,11 +140,9 @@ async function importCountries(path, strapi, dryRun) {
 
         const locations = await Promise.all(p.Locations.map(async l => {
           console.log(`Importing location ${l.Title}`)
-
-          let endpoint = 'api::location.location'
           let location = null
 
-          location = (await strapi.entityService.findMany(endpoint, {
+          location = (await strapi.entityService.findMany('api::location.location', {
             filters: {
               location_id: {$eq: l.LocationId}
             },
@@ -140,7 +152,7 @@ async function importCountries(path, strapi, dryRun) {
           if (location === null || location === undefined) {
             console.log(`Creating new location ${c.Title} -> ${p.Title} -> ${l.Title}`)
 
-            if (!dryRun) location = await strapi.entityService.create(endpoint, {
+            if (!dryRun) location = await strapi.entityService.create('api::location.location', {
               data: {
                 location_id: l.LocationId.toString(),
                 title: l.Title,
@@ -161,6 +173,7 @@ async function importCountries(path, strapi, dryRun) {
       })
     )
 
+    // TODO: Example of assigning linked entries
     console.log(`Assigning ${provinces.length} provinces to ${entity.title}`)
     if (!dryRun) await strapi.entityService.update('api::country.country', entity.id, {
       data: { provinces: provinces.map(p => p.id) }
@@ -351,7 +364,51 @@ async function importErrataCategories(path, strapi, dryRun) {
 
 
 
+/**
+ * We need ESTABLISHMENTS table to be imported before the extras
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importExtras(path, strapi, dryRun) {
+  console.info(`Importing extras from ${path}`)
+  let file
 
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const extras = JSON.parse(file)
+  console.info(`Importing ${extras.length} extras`)
+
+  await Promise.all(extras.map(async e => {
+    console.info(`Importing extras ${e.ExtraId} - ${e.type} - ${e.Title}`)
+
+    let endpoint = 'api::extra.extra'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { extra_id: { $eq: e.ExtraId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new extra ${e.ExtraId} - ${e.Type} - ${e.Title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            extra_id: e.ExtraId,
+            title: e.Title,
+            type: e.Type,
+            establishment: e.EstablishmentId.toString(),
+          },
+        })
+        console.info(`Imported new extra ${e.ExtraId} (${entity.title})`)
+      }
+    }
+  }))
+}
 
 /**
  * We need ESTABLISHMENTS table to be imported before the images
@@ -379,7 +436,7 @@ async function importEstablishmentImages(path, strapi, dryRun) {
     console.info(`Importing image ${ei.ImageId} - ${ei.Url}`)
 
     let endpoint = 'api::establishment-image.establishment-image'
-    let entity = (await strapi.entityService.findMany(endpoint, { filters: { errata_category_id: { $eq: ec.ErrataCategoryId }}, limit: 1}))[0]
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { establishment_image_id: { $eq: ei.ImageId }}, limit: 1}))[0]
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new image for establishment ${ei.EstablishmentId} - ${ei.Url}`)
@@ -387,7 +444,7 @@ async function importEstablishmentImages(path, strapi, dryRun) {
       if (!dryRun) {
         entity = await strapi.entityService.create(endpoint, {
           data: {
-            establishment_id: ei.EstablishmentId.toString(),
+            establishment: ei.EstablishmentId.toString(),
             image_id: ei.ImageId,
             image_url: ei.ImageUrl
           },
@@ -398,6 +455,55 @@ async function importEstablishmentImages(path, strapi, dryRun) {
   }))
 }
 
+
+/**
+ * We need ESTABLISHMENTS table to be imported before the room types
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importEstablishmentRoomTypes(path, strapi, dryRun) {
+  console.info(`Importing establishment room types from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const establishment_room_types = JSON.parse(file)
+  console.info(`Importing ${establishment_room_types.length} establishment room types`)
+
+  await Promise.all(establishment_room_types.map(async ert => {
+    console.info(`Importing room type for establishment ${ert.EstablishmentId} - ${ert.Title}`)
+
+    let endpoint = 'api::establishment-room-type.establishment-room-type'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { room_code: { $eq: ert.RoomCode }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new room type for establishment ${ert.EstablishmentId} - ${ert.Title} - ${ert.ImageId}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            title: ert.Title,
+            establishment: ert.EstablishmentId.toString(),
+            description: ert.Description
+            image_id: ert.ImageId,
+            image: ert.ImageUrl,           // TODO: Hopefully this will upload the media from the URL?
+            image_url: ert.ImageUrl,
+            room_code: ert.RoomCode
+          },
+        })
+        console.info(`Imported new room type for establishment ${ert.EstablishmentId} (${entity.room_code}: ${entity.title})`)
+      }
+    }
+  }))
+}
 
 
 (async () => {

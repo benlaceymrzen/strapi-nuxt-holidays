@@ -4,7 +4,7 @@
   "info": {
     "singularName": "room-type",
     "pluralName": "room-types",
-    "displayName": "Room Types",
+    "displayName": "Establishment Room Types",
     "description": ""
   },
   "options": {
@@ -12,14 +12,34 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "standard_room_type_id": {
-      "type": "string",
-      "required": true,
-      "unique": true
-    },
     "title": {
       "type": "string",
       "required": true
+    },
+    "establishment": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::establishment.establishment",
+      "inversedBy": "establishment_room_types"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image_id": {
+      "type": "uid"
+    },
+    "image": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "room_code": {
+      "type": "string"
     }
   }
 }
