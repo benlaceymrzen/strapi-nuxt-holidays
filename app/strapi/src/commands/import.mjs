@@ -16,10 +16,10 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importCountries( resolve(argv.path), strapi, argv.dryRun)
       })
-      .command('roomTypes <path>', 'Import room types from JSON file', (yargs) => {
+      .command('standardRoomTypes <path>', 'Import standard room types from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
-        await importRoomTypes(resolve(argv.path), strapi, argv.dryRun)
+        await importStandardRoomTypes(resolve(argv.path), strapi, argv.dryRun)
       })
       .command('supplierBoardTypes <path>', 'Import supplier board types from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
@@ -176,8 +176,8 @@ async function importCountries(path, strapi, dryRun) {
  * @param {StrpaiInstance} strapi
  * @returns
  */
-async function importRoomTypes(path, strapi, dryRun) {
-  console.info(`Importing room types from ${path}`)
+async function importStandardRoomTypes(path, strapi, dryRun) {
+  console.info(`Importing standard room types from ${path}`)
   let file
 
   try {
@@ -188,28 +188,25 @@ async function importRoomTypes(path, strapi, dryRun) {
   }
 
   const room_types = JSON.parse(file)
-  console.info(`Importing ${room_types.length} room types`)
+  console.info(`Importing ${room_types.length} standard room types`)
 
   await Promise.all(room_types.map(async rt => {
     console.info(`Importing ${rt.Title}`)
 
-    let endpoint = 'api::room-type.room-type'
+    let endpoint = 'api::standard-room-type.standard-room-type'
     let entity = (await strapi.entityService.findMany(endpoint, { filters: { standard_room_type_id: { $eq: rt.StandardRoomTypeId }}, limit: 1}))[0]
 
     if (entity === null || entity === undefined) {
-      console.info(`Creating new room type: ${rt.Title}`)
+      console.info(`Creating new standard room type: ${rt.Title}`)
 
       if (!dryRun) {
         entity = await strapi.entityService.create(endpoint, {
           data: {
             standard_room_type_id: rt.StandardRoomTypeId.toString(),
             title: rt.Title,
-            //room_code: rt.RoomCode,
-            // image: rt.ImageUrl,
-            // image_id: rt.ImageId
           },
         })
-        console.info(`Imported room type ${rt.Title} (${entity.room_type_id})`)
+        console.info(`Imported standard room type ${rt.Title} (${entity.room_type_id})`)
       }
     }
 
@@ -349,6 +346,58 @@ async function importErrataCategories(path, strapi, dryRun) {
     }
   }))
 }
+
+
+
+
+
+
+
+/**
+ * We need ESTABLISHMENTS table to be imported before the images
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importEstablishmentImages(path, strapi, dryRun) {
+  console.info(`Importing establishment images from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const establishment_images = JSON.parse(file)
+  console.info(`Importing ${establishment_images.length} establishment images`)
+
+  await Promise.all(establishment_images.map(async ei => {
+    console.info(`Importing image ${ei.ImageId} - ${ei.Url}`)
+
+    let endpoint = 'api::establishment-image.establishment-image'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { errata_category_id: { $eq: ec.ErrataCategoryId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new image for establishment ${ei.EstablishmentId} - ${ei.Url}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            establishment_id: ei.EstablishmentId.toString(),
+            image_id: ei.ImageId,
+            image_url: ei.ImageUrl
+          },
+        })
+        console.info(`Imported new image for establishment ${ei.establishment_id} (${entity.image_id})`)
+      }
+    }
+  }))
+}
+
 
 
 (async () => {
