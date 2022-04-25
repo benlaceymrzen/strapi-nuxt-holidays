@@ -11,21 +11,31 @@ import strapi from '@strapi/strapi'
  */
 async function run(args, strapi) {
     await yargs(args)
-        .command('countries <path>', 'Import countries from JSON file', (yargs) => {
-          return yargs.positional('path', { describe: 'Path to countries JSON' })
-        }, async (argv) => {
-          await importCountries( resolve(argv.path), strapi, argv.dryRun)
-        })
-        .command('roomTypes <path>', 'Import room types from JSON file', (yargs) => {
-          return yargs.positional('path', { describe: 'Path to room types JSON' })
-        }, async (argv) => {
-          await importRoomTypes(resolve(argv.path), strapi, argv.dryRun)
-        })
-        .command('supplierBoardTypes <path>', 'Import supplier board types from JSON file', (yargs) => {
-          return yargs.positional('path', { describe: 'Path to supplier board types JSON' })
-        }, async (argv) => {
-          await importSupplierBoardTypes(resolve(argv.path), strapi, argv.dryRun)
-        })
+      .command('countries <path>', 'Import countries from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importCountries( resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('roomTypes <path>', 'Import room types from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importRoomTypes(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('supplierBoardTypes <path>', 'Import supplier board types from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importSupplierBoardTypes(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('accommodationTypes <path>', 'No supplied JSON', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importAccommodationTypes(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('errataCategories <path>', 'Import errata categories from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importErrataCategories(resolve(argv.path), strapi, argv.dryRun)
+      })
         .option('verbose', {
             alias: 'verbose',
             type: 'boolean',
@@ -63,13 +73,14 @@ async function importCountries(path, strapi, dryRun) {
   await Promise.all(countries.map(async c => {
     console.info(`Importing ${c.Title}`)
 
-    let entity = (await strapi.entityService.findMany('api::country.country', { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
+    let endpoint = 'api::country.country'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { country_id: { $eq: c.CountryId }}, limit: 1}))[0]
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new country: ${c.Title}`)
 
       if (!dryRun) {
-        entity = await strapi.entityService.create('api::country.country', {
+        entity = await strapi.entityService.create(endpoint, {
           data: {
             country_id: c.CountryId.toString(),
             title: c.Title,
@@ -85,7 +96,8 @@ async function importCountries(path, strapi, dryRun) {
         let province = null
 
         try {
-          province = (await strapi.entityService.findMany('api::province.province', {
+          let endpoint = 'api::province.province'
+          province = (await strapi.entityService.findMany(endpoint, {
             filters: {
               province_id: { $eq: p.ProvinceId }
             },
@@ -100,7 +112,7 @@ async function importCountries(path, strapi, dryRun) {
 
           if (!dryRun) {
             try {
-              province = await strapi.entityService.create('api::province.province', {
+              province = await strapi.entityService.create(endpoint, {
                 data: {
                   province_id: p.ProvinceId.toString(),
                   title: p.Title,
@@ -114,9 +126,11 @@ async function importCountries(path, strapi, dryRun) {
 
         const locations = await Promise.all(p.Locations.map(async l => {
           console.log(`Importing location ${l.Title}`)
+
+          let endpoint = 'api::location.location'
           let location = null
 
-          location = (await strapi.entityService.findMany('api::location.location', {
+          location = (await strapi.entityService.findMany(endpoint, {
             filters: {
               location_id: {$eq: l.LocationId}
             },
@@ -126,7 +140,7 @@ async function importCountries(path, strapi, dryRun) {
           if (location === null || location === undefined) {
             console.log(`Creating new location ${c.Title} -> ${p.Title} -> ${l.Title}`)
 
-            if (!dryRun) location = await strapi.entityService.create('api::location.location', {
+            if (!dryRun) location = await strapi.entityService.create(endpoint, {
               data: {
                 location_id: l.LocationId.toString(),
                 title: l.Title,
@@ -179,13 +193,14 @@ async function importRoomTypes(path, strapi, dryRun) {
   await Promise.all(room_types.map(async rt => {
     console.info(`Importing ${rt.Title}`)
 
-    let entity = (await strapi.entityService.findMany('api::room-type.room-type', { filters: { standard_room_type_id: { $eq: rt.StandardRoomTypeId }}, limit: 1}))[0]
+    let endpoint = 'api::room-type.room-type'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { standard_room_type_id: { $eq: rt.StandardRoomTypeId }}, limit: 1}))[0]
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new room type: ${rt.Title}`)
 
       if (!dryRun) {
-        entity = await strapi.entityService.create('api::room-type.room-type', {
+        entity = await strapi.entityService.create(endpoint, {
           data: {
             standard_room_type_id: rt.StandardRoomTypeId.toString(),
             title: rt.Title,
@@ -226,13 +241,14 @@ async function importSupplierBoardTypes(path, strapi, dryRun) {
   await Promise.all(board_types.map(async bt => {
     console.info(`Importing ${bt.Title}`)
 
-    let entity = (await strapi.entityService.findMany('api::supplier-board-type.supplier-board-type', { filters: { supplier_board_type_id: { $eq: bt.SupplierBoardTypeId }}, limit: 1}))[0]
+    let endpoint = 'api::supplier-board-type.supplier-board-type'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { supplier_board_type_id: { $eq: bt.SupplierBoardTypeId }}, limit: 1}))[0]
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new supplier board type: ${bt.Title}`)
 
       if (!dryRun) {
-        entity = await strapi.entityService.create('api::supplier-board-type.supplier-board-type', {
+        entity = await strapi.entityService.create(endpoint, {
           data: {
             supplier_board_type_id: bt.SupplierBoardTypeId.toString(),
             title: bt.Title,
@@ -245,6 +261,94 @@ async function importSupplierBoardTypes(path, strapi, dryRun) {
   }))
 }
 
+
+/**
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importAccommodationTypes(path, strapi, dryRun) {
+  console.info(`Importing accommodation types from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const accommodation_types = JSON.parse(file)
+  console.info(`Importing ${accommodation_types.length} accommodation types`)
+
+  await Promise.all(accommodation_types.map(async at => {
+    console.info(`Importing ${at.AccommodationType}`)
+
+    let endpoint = 'api::accommodation-type.accommodation-type'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { accommodation_type_id: { $eq: at.AccommodationTypeId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new accommodation type: ${at.AccommodationType}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            accommodation_type_id: at.AccommodationTypeId.toString(),
+            accommodation_type: at.AccommodationType,
+          },
+        })
+        console.info(`Imported accommodation type ${at.accommodation_type} (${entity.accommodation_type_id})`)
+      }
+    }
+  }))
+}
+
+
+/**
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importErrataCategories(path, strapi, dryRun) {
+  console.info(`Importing errata categories from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const errata_categories = JSON.parse(file)
+  console.info(`Importing ${errata_categories.length} errata categories`)
+
+  await Promise.all(errata_categories.map(async ec => {
+    console.info(`Importing ${ec.ErrataCategoryID} - ${ec.Title}`)
+
+    let endpoint = 'api::errata-category.errata-category'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { errata_category_id: { $eq: ec.ErrataCategoryId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new errata category: ${ec.ErrataCategoryId} - ${ec.Title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            errata_category_id: ec.ErrataCategoryId.toString(),
+            title: ec.Title,
+            definition: ec.Definition
+          },
+        })
+        console.info(`Imported errata category ${ec.errata_category_id} (${entity.title})`)
+      }
+    }
+  }))
+}
 
 
 (async () => {
