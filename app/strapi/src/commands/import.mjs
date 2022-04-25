@@ -41,6 +41,18 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importEstablishmentExtras(resolve(argv.path), strapi, argv.dryRun)
       })
+
+      // Establishment Entities
+      .command('establishmentFacilities <path>', 'Import establishment facilities from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentFacilities(resolve(argv.path), strapi, argv.dryRun)
+      })
+      .command('establishmentExtras <path>', 'Import establishment extras from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentExtras(resolve(argv.path), strapi, argv.dryRun)
+      })
       .command('establishmentImages <path>', 'Import establishment images from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
@@ -363,6 +375,51 @@ async function importErrataCategories(path, strapi, dryRun) {
 
 
 
+/**
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importEstablishmentFacilities(path, strapi, dryRun) {
+  console.info(`Importing establishment facilities from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const facilities = JSON.parse(file)
+  console.info(`Importing ${facilities.length} establishment facilities`)
+
+  await Promise.all(facilities.map(async f => {
+    console.info(`Importing ${ef.FacilityID} ${ef.Title} for ${ef.EstablishmentId}`)
+
+    let endpoint = 'api::establishment-facility.establishment-facility'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { FacilityId: { $eq: ef.FacilityId }}, limit: 1}))[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new establishment facility: ${ef.EstablishmentId} - ${ef.FacilityGroup} - ${ef.FacilityType} - ${ef.title}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            facility_id: ef.ErrataCategoryId.toString(),
+            establishments: ef.EstablishmentId.toString(),
+            facility_type: ef.FacilityType,
+            facility_group: ef.FacilityGroup,
+            title: ef.Title,
+          },
+        })
+        console.info(`Imported establishment facility ${ef.EstablishmentId} (${entity.Title})`)
+      }
+    }
+  }))
+}
 
 /**
  * We need ESTABLISHMENTS table to be imported before the extras

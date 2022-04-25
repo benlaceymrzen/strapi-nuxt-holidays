@@ -4,7 +4,8 @@
   "info": {
     "singularName": "extra",
     "pluralName": "extras",
-    "displayName": "Extras"
+    "displayName": "Extras",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -12,11 +13,6 @@
   "pluginOptions": {},
   "attributes": {
     "extra_id": {
-      "type": "integer",
-      "unique": true,
-      "required": true
-    },
-    "establishment_id": {
       "type": "integer",
       "unique": true,
       "required": true
@@ -29,6 +25,12 @@
     "type": {
       "type": "string",
       "required": true
+    },
+    "establishment": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::establishment.establishment",
+      "inversedBy": "extras"
     }
   }
 }

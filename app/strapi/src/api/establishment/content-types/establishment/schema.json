@@ -77,6 +77,12 @@
       "relation": "oneToMany",
       "target": "api::room-type.room-type",
       "mappedBy": "establishment"
+    },
+    "extras": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::extra.extra",
+      "mappedBy": "establishment"
     }
   }
 }
