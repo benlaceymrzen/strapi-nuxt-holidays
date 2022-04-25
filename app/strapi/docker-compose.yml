@@ -1,0 +1,15 @@
+version: '3.2'
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    volumes:
+      - pg_data:/var/lib/postgres/data:rw
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+
+volumes:
+  pg_data: {}
