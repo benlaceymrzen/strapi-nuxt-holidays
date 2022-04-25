@@ -4,7 +4,8 @@
   "info": {
     "singularName": "errata-category",
     "pluralName": "errata-categories",
-    "displayName": "Errata Categories"
+    "displayName": "Errata Categories",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -21,7 +22,7 @@
       "required": true
     },
     "definition": {
-      "type": "richtext"
+      "type": "text"
     }
   }
 }
