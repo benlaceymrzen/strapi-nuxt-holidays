@@ -10,5 +10,6 @@ module.exports = ({ env }) => ({
       ssl: false,
     },
     useNullAsDefault: true,
+    propagateCreateError: false   // Prevent timeout acquiring connection pool probably full error
   },
 });
