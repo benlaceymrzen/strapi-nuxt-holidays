@@ -4,7 +4,6 @@ import { randomInt } from 'node:crypto'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import strapi from '@strapi/strapi'
-import _ from 'lodash'
 
 
 /**
@@ -391,30 +390,37 @@ async function importEstablishments(path, strapi, dryRun) {
 
   // Chunk the data
   let result = []
-  let max_entries = 10
+  let max_entries = 6
   console.log(`Number of Establishments: ${establishments.length}`)
-  console.log(`Number of Chunks: ${max_entries}`)
 
-  let loop_count = establishments.length / max_entries
-  console.log("Loop Count: ", loop_count)
+  // let loop_count = establishments.length / max_entries
+  // console.log("Loop Count: ", loop_count)
 
-
-  // let chunkedEntries = _.chunk(establishments, max_entries)
   let chunkedEntries = establishments.slice(0, max_entries)
   console.log(`Number of Entries: ${chunkedEntries.length}`)
 
   await Promise.all(chunkedEntries.map(async e => {
     let endpoint = "api::establishment.establishment"
-    let entity = await strapi.entityService.findMany(endpoint, {
+    let entity = (await strapi.entityService.findMany(endpoint, {
       filters: {establishment_id: {$eq: e.EstablishmentId}},
       limit: 1
-    })[0]
+    }))[0]
+
+    console.log('*****')
+    console.log('establishment_id: ', e.EstablishmentId)
+    console.log('entity: ', entity)
+    console.log('*****')
+
+    // If an entity exists we want to skip that item from being imported
+    if(entity){
+      console.log(`Establishment ${e.EstablishmentId}: ${e.EstablishmentTitle} already exists. Skipping...`)
+    }
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new establishment: ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
 
       if (!dryRun) {
-        entity = await strapi.entityService.create(endpoint, {
+        entity = (await strapi.entityService.create(endpoint, {
           data: {
             establishment_id: e.EstablishmentId.toString(),
             title: e.EstablishmentTitle,
@@ -424,28 +430,33 @@ async function importEstablishments(path, strapi, dryRun) {
             email: e.Email,
             fax: e.FaxNumber,
             phone: e.PhoneNumber,
-            location_id: e.LocationId,          // Lookup Location entity
+            location_id: e.LocationId,            // Lookup Location entity
             rating_type_id: e.RatingTypeId,
-            rating: e.Rating
+            rating: e.Rating,
+            geographic_location: [{
+              longitude: e.Longitude,
+              latitude: e.Latitude,
+              geopoint_accuracy: e.GeopointAccuracy
+            }]
           },
-        })
+        }))
         console.info(`Imported establishment ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
 
-        // Add the component data
-        // geographic_location
-
-      }
-
-      console.log("entity", entity)
+        // Update component details
+        // strapi.query('api::establishment.establishment').update(
+        //   { id: entity.id },
+        //   JSON.stringify({
+        //       data: {
+        //         'geographic_location': [{
+        //           longitude: '123456',
+        //           latitude: '789123',
+        //           geopoint_accuracy: 7
+        //         }]
+        //       }
+        //   })
+        // );
+      } // end dry-run
     }
-
-    // Import Establishment Images (component)
-
-    // Import Establishment Geocode (component)
-    // - Might have to find entity for the component and link the data back to the establishment id
-    // latitude: e.Latitude,
-    // longitude: e.longitude,
-    // geocode_accuracy: e.GeocodeAccuracy,
 
   }))
 
