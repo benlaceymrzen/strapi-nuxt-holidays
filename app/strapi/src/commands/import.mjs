@@ -4,6 +4,8 @@ import { randomInt } from 'node:crypto'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import strapi from '@strapi/strapi'
+import _ from 'lodash'
+
 
 /**
  *
@@ -36,13 +38,14 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importErrataCategories(resolve(argv.path), strapi, argv.dryRun)
       })
-      .command('establishmentExtras <path>', 'Import establishment extras from JSON file', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importEstablishmentExtras(resolve(argv.path), strapi, argv.dryRun)
-      })
+
 
       // Establishment Entities
+      .command('establishments <path>', 'Import establishment from JSON file', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishments(resolve(argv.path), strapi, argv.dryRun)
+      })
       .command('establishmentFacilities <path>', 'Import establishment facilities from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
@@ -53,16 +56,7 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importEstablishmentExtras(resolve(argv.path), strapi, argv.dryRun)
       })
-      .command('establishmentImages <path>', 'Import establishment images from JSON file', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importEstablishmentImages(resolve(argv.path), strapi, argv.dryRun)
-      })
-      .command('establishmentRoomTypes <path>', 'Import establishment room types from JSON file', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importEstablishmentRoomTypes(resolve(argv.path), strapi, argv.dryRun)
-      })
+
         .option('verbose', {
             alias: 'verbose',
             type: 'boolean',
@@ -374,6 +368,96 @@ async function importErrataCategories(path, strapi, dryRun) {
 
 
 
+/**
+ * Import Establishments - We need to run accommodationTypes and Rating Types before importing establishments
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importEstablishments(path, strapi, dryRun) {
+  console.info(`Importing establishments from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const establishments = JSON.parse(file)
+
+  // Chunk the data
+  let result = []
+  let max_entries = 10
+  console.log(`Number of Establishments: ${establishments.length}`)
+  console.log(`Number of Chunks: ${max_entries}`)
+
+  let loop_count = establishments.length / max_entries
+  console.log("Loop Count: ", loop_count)
+
+
+  // let chunkedEntries = _.chunk(establishments, max_entries)
+  let chunkedEntries = establishments.slice(0, max_entries)
+  console.log(`Number of Entries: ${chunkedEntries.length}`)
+
+  await Promise.all(chunkedEntries.map(async e => {
+    let endpoint = "api::establishment.establishment"
+    let entity = await strapi.entityService.findMany(endpoint, {
+      filters: {establishment_id: {$eq: e.EstablishmentId}},
+      limit: 1
+    })[0]
+
+    if (entity === null || entity === undefined) {
+      console.info(`Creating new establishment: ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
+
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            establishment_id: e.EstablishmentId.toString(),
+            title: e.EstablishmentTitle,
+            accommodation_type_id: e.AccommodationTypeId,
+            address: e.Address,
+            postal_code: e.PostalCode,
+            email: e.Email,
+            fax: e.FaxNumber,
+            phone: e.PhoneNumber,
+            location_id: e.LocationId,          // Lookup Location entity
+            rating_type_id: e.RatingTypeId,
+            rating: e.Rating
+          },
+        })
+        console.info(`Imported establishment ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
+
+        // Add the component data
+        // geographic_location
+
+      }
+
+      console.log("entity", entity)
+    }
+
+    // Import Establishment Images (component)
+
+    // Import Establishment Geocode (component)
+    // - Might have to find entity for the component and link the data back to the establishment id
+    // latitude: e.Latitude,
+    // longitude: e.longitude,
+    // geocode_accuracy: e.GeocodeAccuracy,
+
+  }))
+
+
+  // console.info(`Importing ${establishments.length} establishments`)
+  //
+  // await Promise.all(establishments.map(async e => {
+  //   console.info(`Importing ${e.EstablishmentID}: ${e.EstablishmentTitle}`)
+  //
+
+  // }))
+}
 
 /**
  *
@@ -492,14 +576,16 @@ async function importEstablishmentImages(path, strapi, dryRun) {
   await Promise.all(establishment_images.map(async ei => {
     console.info(`Importing image ${ei.ImageId} - ${ei.Url}`)
 
-    let endpoint = 'api::establishment-image.establishment-image'
-    let entity = (await strapi.entityService.findMany(endpoint, { filters: { establishment_image_id: { $eq: ei.ImageId }}, limit: 1}))[0]
+    // TODO: Check this and add the data as a repeatable component
+    let entity = (await strapi.entityService.findMany('api::establishment', { filters: { establishment_id: { $eq: ei.EstablishmentId }}, limit: 1}))[0]
+    console.log(entity)
+
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new image for establishment ${ei.EstablishmentId} - ${ei.Url}`)
 
       if (!dryRun) {
-        entity = await strapi.entityService.create(endpoint, {
+        entity = await strapi.entityService.create('api::establishment-image.establishment-image', {
           data: {
             establishment: ei.EstablishmentId.toString(),
             image_id: ei.ImageId,
@@ -549,7 +635,7 @@ async function importEstablishmentRoomTypes(path, strapi, dryRun) {
           data: {
             title: ert.Title,
             establishment: ert.EstablishmentId.toString(),
-            description: ert.Description
+            description: ert.Description,
             image_id: ert.ImageId,
             image: ert.ImageUrl,           // TODO: Hopefully this will upload the media from the URL?
             image_url: ert.ImageUrl,
