@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_establishment_images",
+  "info": {
+    "displayName": "Images",
+    "icon": "images"
+  },
+  "options": {},
+  "attributes": {
+    "image_id": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    }
+  }
+}

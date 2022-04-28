@@ -40,6 +40,13 @@ async function run(args, strapi) {
 
 
       // Establishment Entities
+      // .command('images <path>', 'Import images from JSON file', (yargs) => {
+      //   return yargs.positional('path', { describe: 'Path to JSON file' })
+      // }, async (argv) => {
+      //   await importImages(resolve(argv.path), strapi, argv.dryRun)
+      // })
+
+
       .command('establishments <path>', 'Import establishment from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
@@ -390,13 +397,13 @@ async function importEstablishments(path, strapi, dryRun) {
 
   // Chunk the data
   let result = []
-  let max_entries = 6
+  let max_entries = 3
   console.log(`Number of Establishments: ${establishments.length}`)
 
   // let loop_count = establishments.length / max_entries
   // console.log("Loop Count: ", loop_count)
 
-  let chunkedEntries = establishments.slice(0, max_entries)
+  let chunkedEntries = getRandom(establishments, max_entries)
   console.log(`Number of Entries: ${chunkedEntries.length}`)
 
   await Promise.all(chunkedEntries.map(async e => {
@@ -406,20 +413,31 @@ async function importEstablishments(path, strapi, dryRun) {
       limit: 1
     }))[0]
 
+    // Get the establishment images
+    let est_images = await getEstablishmentImages(e.EstablishmentId)
+
     console.log('*****')
     console.log('establishment_id: ', e.EstablishmentId)
     console.log('entity: ', entity)
+    console.log(`images count: ${est_images.length}`)
     console.log('*****')
-
-    // If an entity exists we want to skip that item from being imported
-    if(entity){
-      console.log(`Establishment ${e.EstablishmentId}: ${e.EstablishmentTitle} already exists. Skipping...`)
-    }
 
     if (entity === null || entity === undefined) {
       console.info(`Creating new establishment: ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
 
       if (!dryRun) {
+        let images = []
+        for(let index=0; index < est_images.length; ++index){
+          let image = est_images[index]
+
+          images.push(
+            {
+              image_id: image.ImageId,
+              image_url: image.Url
+            }
+          )
+        }
+
         entity = (await strapi.entityService.create(endpoint, {
           data: {
             establishment_id: e.EstablishmentId.toString(),
@@ -436,38 +454,17 @@ async function importEstablishments(path, strapi, dryRun) {
             geographic_location: [{
               longitude: e.Longitude,
               latitude: e.Latitude,
-              geopoint_accuracy: e.GeopointAccuracy
-            }]
+              accuracy: e.GeocodeAccuracy
+            }],
+            images: images
           },
         }))
         console.info(`Imported establishment ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
 
-        // Update component details
-        // strapi.query('api::establishment.establishment').update(
-        //   { id: entity.id },
-        //   JSON.stringify({
-        //       data: {
-        //         'geographic_location': [{
-        //           longitude: '123456',
-        //           latitude: '789123',
-        //           geopoint_accuracy: 7
-        //         }]
-        //       }
-        //   })
-        // );
       } // end dry-run
     }
 
   }))
-
-
-  // console.info(`Importing ${establishments.length} establishments`)
-  //
-  // await Promise.all(establishments.map(async e => {
-  //   console.info(`Importing ${e.EstablishmentID}: ${e.EstablishmentTitle}`)
-  //
-
-  // }))
 }
 
 /**
@@ -657,6 +654,33 @@ async function importEstablishmentRoomTypes(path, strapi, dryRun) {
       }
     }
   }))
+}
+
+
+async function getEstablishmentImages(establishment_id){
+  console.info(`Importing establishment images for establishment ID: ${establishment_id}`)
+
+  let file = await readFile("data/EstablishmentImagesV4.json")
+  let images_json = JSON.parse(file)
+
+  let est_images = images_json.filter(item => item['EstablishmentId'] == establishment_id.toString());
+  console.log("est_images: ", est_images)
+
+  return est_images
+}
+
+function getRandom(arr, n) {
+  var result = new Array(n),
+    len = arr.length,
+    taken = new Array(len);
+  if (n > len)
+    throw new RangeError("getRandom: more elements taken than available");
+  while (n--) {
+    var x = Math.floor(Math.random() * len);
+    result[n] = arr[x in taken ? taken[x] : x];
+    taken[x] = --len in taken ? taken[len] : len;
+  }
+  return result;
 }
 
 

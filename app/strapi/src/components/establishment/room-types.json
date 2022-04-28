@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_establishment_room_types",
+  "info": {
+    "displayName": "Room Types",
+    "icon": "bed"
+  },
+  "options": {},
+  "attributes": {
+    "room_code": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "title": {
+      "type": "text"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image_id": {
+      "type": "biginteger"
+    }
+  }
+}
