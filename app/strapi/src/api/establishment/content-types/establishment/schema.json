@@ -29,7 +29,7 @@
       "type": "integer",
       "default": 0,
       "max": 5,
-      "min": 1
+      "min": 0
     },
     "fax_number": {
       "type": "string"
@@ -66,23 +66,28 @@
     },
     "geographic_location": {
       "type": "component",
-      "repeatable": false,
+      "repeatable": true,
       "component": "geographic.geo-point"
     },
     "description": {
       "type": "richtext"
-    },
-    "establishment_room_types": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::room-type.room-type",
-      "mappedBy": "establishment"
     },
     "extras": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::extra.extra",
       "mappedBy": "establishment"
+    },
+    "images": {
+      "displayName": "Images",
+      "type": "component",
+      "repeatable": true,
+      "component": "establishment.images"
+    },
+    "room_types": {
+      "type": "component",
+      "repeatable": true,
+      "component": "establishment.room-types"
     }
   }
 }
