@@ -16,6 +16,7 @@
     "@strapi/strapi": "4.1.8",
     "@webbio/strapi-plugin-scheduler": "^0.1.0",
     "better-sqlite3": "7.4.6",
+    "lodash": "^4.17.21",
     "nvm": "^0.0.4",
     "pg": "^8.7.3",
     "strapi-plugin-migrations": "^1.0.3",
