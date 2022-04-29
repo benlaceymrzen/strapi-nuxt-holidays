@@ -37,31 +37,21 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importErrataCategories(resolve(argv.path), strapi, argv.dryRun)
       })
-      .command('ratingTypes <path>', 'No supplied JSON', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importRatingTypes(resolve(argv.path), strapi, argv.dryRun)
-      })
 
 
       // Establishment Entities
+      // .command('images <path>', 'Import images from JSON file', (yargs) => {
+      //   return yargs.positional('path', { describe: 'Path to JSON file' })
+      // }, async (argv) => {
+      //   await importImages(resolve(argv.path), strapi, argv.dryRun)
+      // })
+
+
       .command('establishments <path>', 'Import establishment from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
         await importEstablishments(resolve(argv.path), strapi, argv.dryRun)
       })
-      .command('establishmentImages <path>', 'Import images from JSON file', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importEstablishmentImages(resolve(argv.path), strapi, argv.dryRun)
-      })
-      .command('establishmentRoomTypes <path>', '', (yargs) => {
-        return yargs.positional('path', { describe: 'Path to JSON file' })
-      }, async (argv) => {
-        await importEstablishmentRoomTypes(resolve(argv.path), strapi, argv.dryRun)
-      })
-
-
       .command('establishmentFacilities <path>', 'Import establishment facilities from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
       }, async (argv) => {
@@ -337,50 +327,6 @@ async function importAccommodationTypes(path, strapi, dryRun) {
   }))
 }
 
-/**
- *
- * @author Ben Lacey
- * @param {string} path
- * @param {StrpaiInstance} strapi
- * @returns
- */
-async function importRatingTypes(path, strapi, dryRun) {
-  console.info(`Importing standard room types from ${path}`)
-  let file
-
-  try {
-    file = await readFile(path)
-  } catch(error) {
-    console.error(`Unable to open file: ${error.message}`)
-    return
-  }
-
-  const rating_types = JSON.parse(file)
-  console.info(`Importing ${rating_types.length} rating types`)
-
-  await Promise.all(rating_types.map(async rt => {
-    console.info(`Importing ${rt.RatingType}`)
-
-    let endpoint = 'api::rating-type.rating-type'
-    let entity = (await strapi.entityService.findMany(endpoint, { filters: { rating_type_id: { $eq: rt.RatingTypeId }}, limit: 1}))[0]
-
-    if (entity === null || entity === undefined) {
-      console.info(`Creating new rating type: ${rt.RatingType}`)
-
-      if (!dryRun) {
-        entity = await strapi.entityService.create(endpoint, {
-          data: {
-            rating_type_id: rt.RatingTypeId.toString(),
-            rating_type: rt.RatingType,
-          },
-        })
-        console.info(`Imported rating type ${rt.RatingType} (${entity.rating_type_id})`)
-      }
-    }
-
-  }))
-}
-
 
 /**
  *
@@ -429,7 +375,7 @@ async function importErrataCategories(path, strapi, dryRun) {
 
 
 /**
- * Import Establishments - We need to run accommodationTypes and RatingTypes before importing establishments
+ * Import Establishments - We need to run accommodationTypes and Rating Types before importing establishments
  *
  * @author Ben Lacey
  * @param {string} path
@@ -451,14 +397,14 @@ async function importEstablishments(path, strapi, dryRun) {
 
   // Chunk the data
   let result = []
-  let max_entries = 10000
+  let max_entries = 10
   console.log(`Number of Establishments: ${establishments.length}`)
 
   // let loop_count = establishments.length / max_entries
   // console.log("Loop Count: ", loop_count)
 
   let chunkedEntries = getRandom(establishments, max_entries)
-  //console.log(`Number of Entries: ${chunkedEntries.length}`)
+  console.log(`Number of Entries: ${chunkedEntries.length}`)
 
   await Promise.all(chunkedEntries.map(async e => {
     let endpoint = "api::establishment.establishment"
@@ -467,10 +413,51 @@ async function importEstablishments(path, strapi, dryRun) {
       limit: 1
     }))[0]
 
+    // Get the establishment images
+    let est_images = await getEstablishmentImages(e.EstablishmentId)
+
+    // Get the establishment room types
+    let est_room_types = await getEstablishmentRoomTypes(e.EstablishmentId)
+
+    console.log('*****')
+    console.log('establishment_id: ', e.EstablishmentId)
+    console.log(`images count: ${est_images.length}`)
+    console.log(`room types count: ${est_room_types.length}`)
+    console.log('*****')
+
     if (entity === null || entity === undefined) {
-      //console.info(`Creating new establishment: ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
+      console.info(`Creating new establishment: ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
 
       if (!dryRun) {
+        let file = await readFile("data/EstablishmentImagesV4.json")
+        let images_json = JSON.parse(file)
+        let images = []
+        for(let index=0; index < est_images.length; ++index){
+          let image = est_images[index]
+
+          images.push(
+            {
+              image_id: image.ImageId,
+              image_url: image.Url
+            }
+          )
+        }
+
+        let room_types = []
+        for(let index=0; index < est_room_types.length; index++){
+          let room_type = est_room_types[index]
+
+          room_types.push(
+            {
+              room_code: room_type.RoomCode,
+              image_url: room_type.ImageUrl,
+              title: room_type.Title,
+              description: room_type.Description,
+              image_id: room_type.ImageId
+            }
+          )
+        }
+
         entity = (await strapi.entityService.create(endpoint, {
           data: {
             establishment_id: e.EstablishmentId.toString(),
@@ -484,13 +471,13 @@ async function importEstablishments(path, strapi, dryRun) {
             location_id: e.LocationId,            // Lookup Location entity
             rating_type_id: e.RatingTypeId,
             rating: e.Rating,
-
-            // Move this to update
             geographic_location: [{
               longitude: e.Longitude,
               latitude: e.Latitude,
               accuracy: e.GeocodeAccuracy
             }],
+            images: images,
+            room_types: room_types
           },
         }))
         console.info(`Imported establishment ${e.EstablishmentId}: ${e.EstablishmentTitle}`)
@@ -593,125 +580,24 @@ async function importExtras(path, strapi, dryRun) {
   }))
 }
 
-/**
- * We need ESTABLISHMENTS table to be imported before the images
- *
- * @author Ben Lacey
- * @param {string} path
- * @param {StrpaiInstance} strapi
- * @returns
- */
-async function importEstablishmentImages(path, strapi, dryRun) {
-  console.info(`Importing establishment images from ${path}`)
-  let file
 
-  try {
-    file = await readFile(path)
-  } catch(error) {
-    console.error(`Unable to open file: ${error.message}`)
-    return
-  }
 
-  const establishment_images = JSON.parse(file)
-  console.info(`Importing ${establishment_images.length} establishment images`)
 
-  let imageMap = {}
-  await Promise.all(establishment_images.map(async ei => {
-    // TODO: Check this and add the data as a repeatable component
-    let establishment = (await strapi.entityService.findMany('api::establishment.establishment', { filters: { establishment_id: { $eq: ei.EstablishmentId }}, limit: 1}))[0]
+async function getEstablishmentImages(establishment_id){
 
-    // If the entity exists
+  let est_images = images_json.filter(item => item['EstablishmentId'] == establishment_id.toString());
 
-    if (establishment.id) {
-      console.info(`Importing image ${ei.ImageId} - ${ei.Url} for establishment ${establishment.id}`)
-
-      if(!imageMap[establishment.id]){
-        imageMap[establishment.id] = []
-      }
-
-      let image = {
-        'image_url': ei.Url,
-        'image_id': ei.ImageId
-      }
-      imageMap[establishment.id].push(image)
-
-      console.log("imageMap", imageMap)
-    }
-  }))
-
-  // Import the images to the establishment
-  // await Promise.all(
-  //   imageMap.forEach( (key, value) => {
-  //     let updated = strapi.entityService.update('api::establishment.establishment', key, {
-  //       data: {
-  //         images: value
-  //       }
-  //     }).then(
-  //       console.info(`Imported new image for establishment ${key} (${value})`)
-  //     )
-  //   })
-  // )
-
+  return est_images
 }
 
+async function getEstablishmentRoomTypes(establishment_id){
+  let file = await readFile("data/EstablishmentRoomTypes_enV4.json")
+  let room_types_json = JSON.parse(file)
+  let est_room_types = room_types_json.filter(item => item['EstablishmentId'] == establishment_id.toString());
+  console.log("est room types: ", est_room_types)
 
-/**
- * We need ESTABLISHMENTS table to be imported before the room types
- *
- * @author Ben Lacey
- * @param {string} path
- * @param {StrpaiInstance} strapi
- * @returns
- */
-async function importEstablishmentRoomTypes(path, strapi, dryRun) {
-  console.info(`Importing establishment room types from ${path}`)
-  let file
-
-  try {
-    file = await readFile(path)
-  } catch(error) {
-    console.error(`Unable to open file: ${error.message}`)
-    return
-  }
-
-  const room_types = JSON.parse(file)
-
-  // Choose an establishment to update first (that have room types)
-  let establishment_room_types = room_types.filter(item => item['EstablishmentId'] == '2991450');
-  console.info(`Importing ${establishment_room_types.length} establishment room types`)
-
-  await Promise.all(establishment_room_types.map(async ert => {
-    console.info(`Importing room type for establishment ${ert.EstablishmentId} - ${ert.Title}`)
-
-    let endpoint = 'api::establishment.establishment'
-    let establishment = (await strapi.entityService.findMany(endpoint, { filters: { establishment_id: { $eq: ert.EstablishmentId }}, limit: 1}))[0]
-
-    if (establishment != null || establishment != undefined) {
-      console.info(`Assigning room type to establishment ${ert.EstablishmentId}: ${ert.Title} - ${ert.ImageId}`)
-
-      // TODO: Error: Undefined attribute level operator data
-      if (!dryRun) {
-        let establishmnent = await strapi.entityService.update(endpoint, establishment.id, {
-          data: {
-            room_types: [
-              {
-                title: ert.Title,
-                description: ert.Description,
-                image_id: ert.ImageId,
-                //image: ert.ImageUrl,           // TODO: Hopefully this will upload the media from the URL?
-                image_url: ert.ImageUrl,
-                room_code: ert.RoomCode
-              }
-            ]
-          },
-        })
-        console.info(`Imported new room type for establishment ${establishmnent.establishment_id}`)
-      }
-    }
-  }))
+  return est_room_types
 }
-
-
 
 function getRandom(arr, n) {
   var result = new Array(n),
