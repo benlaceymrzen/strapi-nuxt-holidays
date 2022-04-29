@@ -612,7 +612,10 @@ async function importEstablishmentImages(path, strapi, dryRun) {
     return
   }
 
-  const establishment_images = JSON.parse(file)
+  const images = JSON.parse(file)
+
+  // Temporary Filter for one establishment
+  let establishment_images = images.filter(item => item['EstablishmentId'] == '2991450');
   console.info(`Importing ${establishment_images.length} establishment images`)
 
   let imageMap = {}
@@ -620,9 +623,7 @@ async function importEstablishmentImages(path, strapi, dryRun) {
     // TODO: Check this and add the data as a repeatable component
     let establishment = (await strapi.entityService.findMany('api::establishment.establishment', { filters: { establishment_id: { $eq: ei.EstablishmentId }}, limit: 1}))[0]
 
-    // If the entity exists
-
-    if (establishment.id) {
+    if (establishment != null || establishment != undefined) {
       console.info(`Importing image ${ei.ImageId} - ${ei.Url} for establishment ${establishment.id}`)
 
       if(!imageMap[establishment.id]){
@@ -634,23 +635,34 @@ async function importEstablishmentImages(path, strapi, dryRun) {
         'image_id': ei.ImageId
       }
       imageMap[establishment.id].push(image)
-
-      console.log("imageMap", imageMap)
+      // console.log("imageMap", imageMap)
     }
   }))
 
   // Import the images to the establishment
-  // await Promise.all(
-  //   imageMap.forEach( (key, value) => {
-  //     let updated = strapi.entityService.update('api::establishment.establishment', key, {
-  //       data: {
-  //         images: value
-  //       }
-  //     }).then(
-  //       console.info(`Imported new image for establishment ${key} (${value})`)
-  //     )
-  //   })
-  // )
+  for(var establishmentId in imageMap) {
+    if (!imageMap.hasOwnProperty(establishmentId)) {
+      continue;
+    }
+
+    let images = imageMap[establishmentId]
+    await strapi.entityService.update('api::establishment.establishment', establishmentId, {
+      data: {
+        images:
+          images
+          // [{
+          //   image_id: '12345',
+          //   image_url: 'https://test.com/image.jpg'
+          // }]
+
+      }
+    }).then(
+      console.info(`Attached new image for establishment ${establishmentId}`)
+    )
+  }
+
+
+
 
 }
 
