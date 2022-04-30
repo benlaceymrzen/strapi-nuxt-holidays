@@ -60,7 +60,11 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importEstablishmentRoomTypes(resolve(argv.path), strapi, argv.dryRun)
       })
-
+      .command('establishmentDescriptions <path>', '', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importEstablishmentDescriptions(resolve(argv.path), strapi, argv.dryRun)
+      })
 
       .command('establishmentFacilities <path>', 'Import establishment facilities from JSON file', (yargs) => {
         return yargs.positional('path', { describe: 'Path to JSON file' })
@@ -678,11 +682,11 @@ async function importEstablishmentRoomTypes(path, strapi, dryRun) {
     console.error(`Unable to open file: ${error.message}`)
     return
   }
-
   const room_types = JSON.parse(file)
 
   // Choose an establishment to update first (that have room types)
-  let establishment_room_types = room_types.filter(item => item['EstablishmentId'] == '2991450');
+  //let establishment_room_types = room_types.filter(item => item['EstablishmentId'] == '2991450');
+  let establishment_room_types = getRandom(room_types, 2000)
   console.info(`Importing ${establishment_room_types.length} establishment room types`)
 
   await Promise.all(establishment_room_types.map(async ert => {
@@ -716,6 +720,53 @@ async function importEstablishmentRoomTypes(path, strapi, dryRun) {
   }))
 }
 
+
+/**
+ * We need ESTABLISHMENTS table to be imported before the descriptions
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importEstablishmentDescriptions(path, strapi, dryRun) {
+  console.info(`Importing establishment descriptions from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+  const descriptions = JSON.parse(file)
+
+  // Choose an establishment to update first
+  //let establishment_text = descriptions.filter(item => item['EstablishmentId'] == '2991450');
+  let establishment_text = getRandom(descriptions, 2000)
+  console.info(`Importing ${establishment_text.length} establishment descriptions`)
+
+  await Promise.all(establishment_text.map(async et => {
+    console.info(`Importing description for establishment ${et.EstablishmentId}`)
+
+    let endpoint = 'api::establishment.establishment'
+    let establishment = (await strapi.entityService.findMany(endpoint, { filters: { establishment_id: { $eq: et.EstablishmentId }}, limit: 1}))[0]
+
+    if (establishment != null || establishment != undefined) {
+      console.info(`Assigning description to establishment ${et.EstablishmentId}`)
+
+      // TODO: Error: Undefined attribute level operator data
+      if (!dryRun) {
+        let establishmnent = await strapi.entityService.update(endpoint, establishment.id, {
+          data: {
+            description: et.Description,
+          },
+        })
+        console.info(`Imported description text for establishment ${establishmnent.establishment_id}`)
+      }
+    }
+  }))
+}
 
 
 function getRandom(arr, n) {
