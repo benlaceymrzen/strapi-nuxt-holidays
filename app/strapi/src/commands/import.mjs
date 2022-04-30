@@ -615,7 +615,7 @@ async function importEstablishmentImages(path, strapi, dryRun) {
   const images = JSON.parse(file)
 
   // Temporary Filter for one establishment
-  let establishment_images = images.filter(item => item['EstablishmentId'] == '2991450');
+  let establishment_images = chunkArray(images, 200);
   console.info(`Importing ${establishment_images.length} establishment images`)
 
   let imageMap = {}
@@ -635,35 +635,28 @@ async function importEstablishmentImages(path, strapi, dryRun) {
         'image_id': ei.ImageId
       }
       imageMap[establishment.id].push(image)
-      // console.log("imageMap", imageMap)
+      console.log("imageMap", imageMap)
     }
   }))
 
   // Import the images to the establishment
-  for(var establishmentId in imageMap) {
-    if (!imageMap.hasOwnProperty(establishmentId)) {
-      continue;
-    }
-
-    let images = imageMap[establishmentId]
-    await strapi.entityService.update('api::establishment.establishment', establishmentId, {
-      data: {
-        images:
-          images
-          // [{
-          //   image_id: '12345',
-          //   image_url: 'https://test.com/image.jpg'
-          // }]
-
+  if (!dryRun) {
+    for (var establishmentId in imageMap) {
+      if (!imageMap.hasOwnProperty(establishmentId)) {
+        continue;
       }
-    }).then(
-      console.info(`Attached new image for establishment ${establishmentId}`)
-    )
+
+      let images = imageMap[establishmentId]
+      await strapi.entityService.update('api::establishment.establishment', establishmentId, {
+        data: {
+          images:
+          images
+        }
+      }).then(
+        console.info(`Attached new image for establishment ${establishmentId}`)
+      )
+    }
   }
-
-
-
-
 }
 
 
@@ -737,6 +730,14 @@ function getRandom(arr, n) {
     taken[x] = --len in taken ? taken[len] : len;
   }
   return result;
+}
+
+function chunkArray(arr, len) {
+  var chunks = [], i = 0, n = arr.length;
+  while (i < n) {
+    chunks.push(arr.slice(i, i += len));
+  }
+  return chunks;
 }
 
 
