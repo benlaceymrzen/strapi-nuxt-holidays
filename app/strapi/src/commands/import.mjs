@@ -747,22 +747,17 @@ async function importEstablishmentDescriptions(path, strapi, dryRun) {
   console.info(`Importing ${establishment_text.length} establishment descriptions`)
 
   await Promise.all(establishment_text.map(async et => {
-    console.info(`Importing description for establishment ${et.EstablishmentId}`)
-
     let endpoint = 'api::establishment.establishment'
     let establishment = (await strapi.entityService.findMany(endpoint, { filters: { establishment_id: { $eq: et.EstablishmentId }}, limit: 1}))[0]
 
     if (establishment != null || establishment != undefined) {
-      console.info(`Assigning description to establishment ${et.EstablishmentId}`)
-
-      // TODO: Error: Undefined attribute level operator data
       if (!dryRun) {
         let establishmnent = await strapi.entityService.update(endpoint, establishment.id, {
           data: {
             description: et.Description,
           },
         })
-        console.info(`Imported description text for establishment ${establishmnent.establishment_id}`)
+        console.info(`Assigned description to establishment ${et.EstablishmentId}`)
       }
     }
   }))
