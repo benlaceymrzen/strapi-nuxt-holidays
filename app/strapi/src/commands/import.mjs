@@ -42,7 +42,11 @@ async function run(args, strapi) {
       }, async (argv) => {
         await importRatingTypes(resolve(argv.path), strapi, argv.dryRun)
       })
-
+      .command('facilities <path>', 'Import facilities', (yargs) => {
+        return yargs.positional('path', { describe: 'Path to JSON file' })
+      }, async (argv) => {
+        await importFacilities(resolve(argv.path), strapi, argv.dryRun)
+      })
 
       // Establishment Entities
       .command('establishments <path>', 'Import establishment from JSON file', (yargs) => {
@@ -506,6 +510,49 @@ async function importEstablishments(path, strapi, dryRun) {
 }
 
 /**
+ * Import the facilities
+ *
+ * @author Ben Lacey
+ * @param {string} path
+ * @param {StrpaiInstance} strapi
+ * @returns
+ */
+async function importFacilities(path, strapi, dryRun) {
+  console.info(`Importing extras from ${path}`)
+  let file
+
+  try {
+    file = await readFile(path)
+  } catch(error) {
+    console.error(`Unable to open file: ${error.message}`)
+    return
+  }
+
+  const facilities = JSON.parse(file)
+  console.info(`Importing ${facilities.length} facilities`)
+
+  await Promise.all(facilities.map(async f => {
+    let endpoint = 'api::facility.facility'
+    let entity = (await strapi.entityService.findMany(endpoint, { filters: { facility_id: { $eq: f.FacilityId }}, limit: 1}))[0]
+
+    console.info(`Importing facility ${f.FacilityGroup} - ${f.FacilityType} - ${f.Title}`)
+    if (entity === null || entity === undefined) {
+      if (!dryRun) {
+        entity = await strapi.entityService.create(endpoint, {
+          data: {
+            facility_id: f.FacilityId,
+            facility_group: f.FacilityGroup,
+            facility_type: f.FacilityType,
+            title: f.Title,
+          },
+        })
+        console.info(`Imported facility ${f.FacilityId} (${f.Title})`)
+      }
+    }
+  }))
+}
+
+/**
  *
  * @author Ben Lacey
  * @param {string} path
@@ -743,7 +790,7 @@ async function importEstablishmentDescriptions(path, strapi, dryRun) {
 
   // Choose an establishment to update first
   //let establishment_text = descriptions.filter(item => item['EstablishmentId'] == '2991450');
-  let establishment_text = getRandom(descriptions, 2000)
+  let establishment_text = getRandom(descriptions, 5000)
   console.info(`Importing ${establishment_text.length} establishment descriptions`)
 
   await Promise.all(establishment_text.map(async et => {
