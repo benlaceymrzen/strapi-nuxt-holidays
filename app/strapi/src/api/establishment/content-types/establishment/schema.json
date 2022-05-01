@@ -34,9 +34,6 @@
     "fax_number": {
       "type": "string"
     },
-    "email": {
-      "type": "email"
-    },
     "location": {
       "type": "relation",
       "relation": "manyToMany",
@@ -88,6 +85,9 @@
       "type": "component",
       "repeatable": true,
       "component": "establishment.room-types"
+    },
+    "email": {
+      "type": "string"
     }
   }
 }
