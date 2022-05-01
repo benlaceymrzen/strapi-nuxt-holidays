@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_establishment_facilities",
+  "info": {
+    "displayName": "Facilities",
+    "icon": "building",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "facility_id": {
+      "type": "integer",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "facility_type": {
+      "type": "string"
+    },
+    "facility_group": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    }
+  }
+}
