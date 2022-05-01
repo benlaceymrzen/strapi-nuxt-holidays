@@ -55,12 +55,6 @@
       "default": "0",
       "required": true
     },
-    "facilities": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::facility.facility",
-      "inversedBy": "establishments"
-    },
     "geographic_location": {
       "type": "component",
       "repeatable": true,
@@ -88,6 +82,11 @@
     },
     "email": {
       "type": "string"
+    },
+    "establishment_facilities": {
+      "type": "component",
+      "repeatable": true,
+      "component": "establishment.facilities"
     }
   }
 }

@@ -26,12 +26,6 @@
     "title": {
       "type": "string",
       "required": true
-    },
-    "establishments": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::establishment.establishment",
-      "mappedBy": "facilities"
     }
   }
 }
